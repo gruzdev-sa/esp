@@ -6,8 +6,6 @@ SoCGen and SocketGen tools.
 
 This directory is organized as follows:
 
-`rtl/`
-
 * `tiles` contains the top module of each tile type. It also contains
   the flexible top level module (`esp.vhd`) that combines tiles into a
   tile grid, based on the selected SoC configuration.

@@ -8,7 +8,6 @@ and on top of Linux.
 
 Each folder corresponds to a design flow:
 
-`rtl/`
 * `catapult_hls`: accelerator design in C/C++ with Mentor Catapult HLS
   ([guide](https://www.esp.cs.columbia.edu/docs/mentor_cpp_acc/)).
 
