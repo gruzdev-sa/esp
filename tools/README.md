@@ -3,8 +3,6 @@
 This directory contains tools for design automation and for the
 external communication with an ESP SoC.
 
-Tools:
-
 * **AccGen** is a tool for generating the skeleton of an accelerator
   as well as its testbench, a bare-metal test application, and a Linux
   device driver and test application. Currently the tool has support
@@ -32,6 +30,6 @@ Tools:
   counters of an ESP SoC from a host machine. _ESPMon_ communicates
   with the monitor unit on the ESP SoC via Ethernet. It can be used
   with a GUI or in batch mode. Currently this tool can be used only
-  with two of the FPGA boards supported for ESP: the proFPGA quad
-  Virtex7 Prototyping System and the proFPGA quad Virtex UltraScale
-  Prototyping System.
+  with two of the FPGA boards supported for ESP through their MMI64
+  interface: the proFPGA quad Virtex7 Prototyping System and the
+  proFPGA quad Virtex UltraScale Prototyping System.
