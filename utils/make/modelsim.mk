@@ -34,7 +34,7 @@ VSIM = vsim $(VSIMOPT)
 ### SDF annotation for DCO simulation ###
 
 # Generate list of DCOs in the current design
-sdf_dco.list: .esp_config socketgen modelsim/vsim.mk
+sdf_dco.list: $(ESP_CFG_BUILD)/.esp_config socketgen modelsim/vsim.mk
 	$(QUIET_RUN) rm -f $@
 	@if test -e $(DESIGN_PATH)/sdf_gen.do; then \
 		cd modelsim; \
