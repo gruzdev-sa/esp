@@ -33,7 +33,6 @@ use work.stdlib.all;
 use work.devices.all;
 use work.config_types.all;
 use work.config.all;
-use work.all;
 
 package ahb2mig_7series_pkg is
 
@@ -44,6 +43,39 @@ package ahb2mig_7series_pkg is
 -------------------------------------------------------------------------------
 -- AHB2MIG interface type declarations and constant
 -------------------------------------------------------------------------------
+
+  type lpddr_out_t is record
+    lpddr_ck_p        : std_logic;
+    lpddr_ck_n        : std_logic;
+    lpddr_cke         : std_logic;
+    lpddr_ba          : std_logic_vector(2 downto 0);
+    lpddr_addr        : std_logic_vector(15 downto 0);
+    lpddr_cs_n        : std_logic;
+    lpddr_ras_n       : std_logic;
+    lpddr_cas_n       : std_logic;
+    lpddr_we_n        : std_logic;
+    lpddr_reset_n     : std_logic;
+    lpddr_odt         : std_logic;
+    lpddr_dm_oen      : std_logic_vector(3 downto 0);
+    lpddr_dm          : std_logic_vector(3 downto 0);
+    lpddr_dqs_p_oen   : std_logic_vector(3 downto 0);
+    lpddr_dqs_p_ien   : std_logic_vector(3 downto 0);
+    lpddr_dqs_p_o     : std_logic_vector(3 downto 0);
+    lpddr_dqs_n_oen   : std_logic_vector(3 downto 0);
+    lpddr_dqs_n_ien   : std_logic_vector(3 downto 0);
+    lpddr_dqs_n_o     : std_logic_vector(3 downto 0);
+    lpddr_dq_oen      : std_logic_vector(31 downto 0);
+    lpddr_dq_o        : std_logic_vector(31 downto 0);
+  end record lpddr_out_t;
+
+  type lpddr_in_t is record
+    lpddr_dqs_p_i     : std_logic_vector(3 downto 0);
+    lpddr_dqs_n_i     : std_logic_vector(3 downto 0);
+    lpddr_dq_i        : std_logic_vector(31 downto 0);
+  end record lpddr_in_t;
+
+  type lpddr_out_vector is array (natural range <>) of lpddr_out_t;
+  type lpddr_in_vector is array (natural range <>) of lpddr_in_t;
 
 -------------------------------------------------------------------------------
 -- AHB2MIG Subprograms

@@ -412,7 +412,8 @@ package tiles_pkg is
       this_has_dco : integer range 0 to 1 := 0;
       test_if_en   : integer range 0 to 1 := 0;
       this_has_ddr : integer range 0 to 1 := 1;
-      ROUTER_PORTS : ports_vec            := "11111";
+      dco_rst_cfg  : std_logic_vector(18 downto 0) := (others => '0');
+      ROUTER_PORTS : ports_vec := "11111";
       HAS_SYNC     : integer range 0 to 1 := 1);
     port (
       raw_rstn           : in  std_ulogic;
@@ -423,8 +424,16 @@ package tiles_pkg is
       pllclk             : out std_ulogic;
       dco_clk            : out std_ulogic;
       dco_clk_lock       : out std_ulogic;
+      -- DDR controller ports (this_has_ddr -> 1)
+      dco_clk_div2       : out std_ulogic;
+      dco_clk_div2_90    : out std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;
+      ddr_cfg0           : out std_logic_vector(31 downto 0);
+      ddr_cfg1           : out std_logic_vector(31 downto 0);
+      ddr_cfg2           : out std_logic_vector(31 downto 0);
+      ddr_id             : out integer range 0 to CFG_NDDR_TILE - 1;
+      -- FPGA proxy memory link (this_has_ddr -> 0)
       fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
       fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
       fpga_oen           : out std_ulogic;

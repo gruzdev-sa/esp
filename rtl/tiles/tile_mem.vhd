@@ -37,6 +37,7 @@ entity tile_mem is
     this_has_dco : integer range 0 to 1 := 0;
     test_if_en   : integer range 0 to 1 := 0;
     this_has_ddr : integer range 0 to 1 := 1;
+    dco_rst_cfg  : std_logic_vector(18 downto 0) := (others => '0');
     ROUTER_PORTS : ports_vec := "11111";
     HAS_SYNC: integer range 0 to 1 := 1);
   port (
@@ -49,8 +50,14 @@ entity tile_mem is
     dco_clk            : out std_ulogic;
     dco_clk_lock       : out std_ulogic;
     -- DDR controller ports (this_has_ddr -> 1)
+    dco_clk_div2       : out std_ulogic;
+    dco_clk_div2_90    : out std_ulogic;
     ddr_ahbsi          : out ahb_slv_in_type;
     ddr_ahbso          : in  ahb_slv_out_type;
+    ddr_cfg0           : out std_logic_vector(31 downto 0);
+    ddr_cfg1           : out std_logic_vector(31 downto 0);
+    ddr_cfg2           : out std_logic_vector(31 downto 0);
+    ddr_id             : out integer range 0 to CFG_NDDR_TILE - 1;
     -- FPGA proxy memory link (this_has_ddr -> 0)
     fpga_data_in       : in  std_logic_vector(ARCH_BITS - 1 downto 0);
     fpga_data_out      : out std_logic_vector(ARCH_BITS - 1 downto 0);
@@ -322,7 +329,6 @@ architecture rtl of tile_mem is
     0      => '1',  -- memory
     others => '0');
 
-
   -- Noc signals
   signal noc1_stop_in_s         : std_logic_vector(4 downto 0);
   signal noc1_stop_out_s        : std_logic_vector(4 downto 0);
@@ -506,7 +512,7 @@ architecture rtl of tile_mem is
 begin
 
   -- DCO
-  dco_gen: if this_has_dco /= 0 generate
+  dco_gen: if this_has_dco /= 0 and this_has_ddr = 0 generate
 
     dco_i: dco
       generic map (
@@ -526,18 +532,51 @@ begin
         clk_div  => pllclk,
         lock     => dco_clk_lock);
 
-    dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 0  downto ESP_CSR_DCO_CFG_MSB - 0  - 1);
-    dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 2  downto ESP_CSR_DCO_CFG_MSB - 2  - 2);
-    dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 5  downto ESP_CSR_DCO_CFG_MSB - 5  - 5);
-    dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 11 downto ESP_CSR_DCO_CFG_MSB - 11 - 5);
-    dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
-    dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
-
   end generate dco_gen;
+
+
+  -- DCO LPDDR
+  dco_lpddr_gen: if this_has_dco /= 0 and this_has_ddr /= 0 generate
+
+    dco_i: dco_lpddr
+      generic map (
+        tech => CFG_FABTECH,
+        dlog => 9)                      -- come out of reset after NoC, but
+                                        -- before tile_io.
+      port map (
+        rstn     => raw_rstn,
+        ext_clk  => refclk,
+        en       => dco_en,
+        clk_sel  => dco_clk_sel,
+        cc_sel   => dco_cc_sel,
+        fc_sel   => dco_fc_sel,
+        div_sel  => dco_div_sel,
+        freq_sel => dco_freq_sel,
+        clk      => dco_clk,
+        clk_div2 => dco_clk_div2,
+        clk_div2_90 => dco_clk_div2_90,
+        clk_div  => pllclk,
+        lock     => dco_clk_lock);
+
+  end generate dco_lpddr_gen;
+
+
+  -- DCO runtime reconfiguration
+  dco_freq_sel <= tile_config(ESP_CSR_DCO_CFG_MSB - 0  downto ESP_CSR_DCO_CFG_MSB - 0  - 1);
+  dco_div_sel  <= tile_config(ESP_CSR_DCO_CFG_MSB - 2  downto ESP_CSR_DCO_CFG_MSB - 2  - 2);
+  dco_fc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 5  downto ESP_CSR_DCO_CFG_MSB - 5  - 5);
+  dco_cc_sel   <= tile_config(ESP_CSR_DCO_CFG_MSB - 11 downto ESP_CSR_DCO_CFG_MSB - 11 - 5);
+  dco_clk_sel  <= tile_config(ESP_CSR_DCO_CFG_LSB + 1);
+  dco_en       <= raw_rstn and tile_config(ESP_CSR_DCO_CFG_LSB);
 
   no_dco_gen: if this_has_dco = 0 generate
     pllclk <= '0';
   end generate no_dco_gen;
+
+  -- DDR Controller configuration
+  ddr_cfg0 <= tile_config(ESP_CSR_DDR_CFG0_MSB downto ESP_CSR_DDR_CFG0_LSB);
+  ddr_cfg1 <= tile_config(ESP_CSR_DDR_CFG1_MSB downto ESP_CSR_DDR_CFG1_LSB);
+  ddr_cfg2 <= tile_config(ESP_CSR_DDR_CFG2_MSB downto ESP_CSR_DDR_CFG2_LSB);
 
 
   -----------------------------------------------------------------------------
@@ -631,6 +670,8 @@ begin
   -----------------------------------------------------------------------------
   tile_id           <= to_integer(unsigned(tile_config(ESP_CSR_TILE_ID_MSB downto ESP_CSR_TILE_ID_LSB)));
   pad_cfg           <= tile_config(ESP_CSR_PAD_CFG_MSB downto ESP_CSR_PAD_CFG_LSB);
+
+  ddr_id            <= tile_ddr_id(tile_id);
 
   this_mem_id       <= tile_mem_id(tile_id);
   this_ddr_hindex   <= ddr_hindex(this_mem_id);
@@ -907,7 +948,8 @@ begin
   --Memory mapped registers
   mem_tile_csr : esp_tile_csr
     generic map(
-      pindex  => 0)
+      pindex      => 0,
+      dco_rst_cfg => dco_rst_cfg)
     port map(
       clk => clk,
       rstn => rst,
